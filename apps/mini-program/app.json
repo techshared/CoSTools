@@ -1,0 +1,23 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/profit/index",
+    "pages/dashboard/index",
+    "pages/contribution/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "CoSTools",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#94a3b8",
+    "selectedColor": "#0ea5e9",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页", "icon": "home" },
+      { "pagePath": "pages/profit/index", "text": "分成", "icon": "wallet" },
+      { "pagePath": "pages/dashboard/index", "text": "仪表盘", "icon": "chart" },
+      { "pagePath": "pages/contribution/index", "text": "贡献", "icon": "star" }
+    ]
+  }
+}

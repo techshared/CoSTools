@@ -1,0 +1,53 @@
+<!-- 收益分成查看 -->
+<view class="container">
+  <view class="header">
+    <text class="title">我的分成</text>
+  </view>
+
+  <view class="summary-card">
+    <text class="summary-label">累计分成</text>
+    <text class="summary-value">¥12,580.00</text>
+    <text class="summary-change">较上月 +15%</text>
+  </view>
+
+  <view class="section">
+    <text class="section-title">最近分成</text>
+    <view class="list">
+      <view class="list-item" tt:for="{{distributions}}" tt:key="id">
+        <view class="item-left">
+          <text class="item-title">{{item.projectName}}</text>
+          <text class="item-date">{{item.date}}</text>
+        </view>
+        <text class="item-amount">¥{{item.amount}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty" tt:if="{{!distributions || distributions.length === 0}}">
+    <text>暂无分成记录</text>
+  </view>
+</view>
+
+<style>
+.container { padding: 24px; }
+.header { margin-bottom: 24px; }
+.title { font-size: 20px; font-weight: 700; }
+.summary-card {
+  background: linear-gradient(135deg, #0ea5e9, #0284c7);
+  border-radius: 16px; padding: 24px; color: white; margin-bottom: 24px;
+}
+.summary-label { font-size: 14px; opacity: 0.9; }
+.summary-value { font-size: 32px; font-weight: 700; margin: 8px 0; }
+.summary-change { font-size: 12px; opacity: 0.8; }
+.section { margin-bottom: 16px; }
+.section-title { font-weight: 600; margin-bottom: 12px; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.list-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;
+}
+.item-title { font-weight: 500; }
+.item-date { font-size: 12px; color: #64748b; display: block; }
+.item-amount { font-weight: 600; color: #0ea5e9; }
+.empty { text-align: center; padding: 48px; color: #94a3b8; }
+</style>

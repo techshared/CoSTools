@@ -1,0 +1,12 @@
+{
+  "name": "@costools/mini-program",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CoSTools 飞书小程序 - 移动端快捷查看",
+  "main": "app.js",
+  "dependencies": {
+    "@costools/api-client": "workspace:*",
+    "@costools/shared-types": "workspace:*",
+    "@costools/utils": "workspace:*"
+  }
+}

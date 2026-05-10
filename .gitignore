@@ -1,0 +1,44 @@
+node_modules/
+dist/
+.next/
+.cache/
+build/
+README-TECH.md
+
+# Local dev / user-specific
+README-TECH.md
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.pem
+cloudflared/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.pytest_cache/
+*.egg-info/
+
+# Logs
+*.log
+.pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+pgdata/
+
+# Temp
+tmp/

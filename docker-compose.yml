@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: costools
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  profit-engine:
+    build:
+      context: ./services/profit-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/costools
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  decision-registry:
+    build:
+      context: ./services/decision-registry
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/costools
+    depends_on:
+      - postgres
+
+  dashboard:
+    build:
+      context: ./services/dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/costools
+    depends_on:
+      - postgres
+
+  contribution-graph:
+    build:
+      context: ./services/contribution-graph
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8004"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/costools
+    depends_on:
+      - postgres
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file: .env
+    environment:
+      NEXT_PUBLIC_PROFIT_API: http://profit-engine:8001
+      NEXT_PUBLIC_DECISION_API: http://decision-registry:8002
+      NEXT_PUBLIC_DASHBOARD_API: http://dashboard:8003
+      NEXT_PUBLIC_CONTRIBUTION_API: http://contribution-graph:8004
+    dns:
+      - 1.1.1.1
+      - 223.5.5.5
+    depends_on:
+      - profit-engine
+      - decision-registry
+      - dashboard
+      - contribution-graph
+
+  bot:
+    build:
+      context: .
+      dockerfile: apps/bot/Dockerfile
+    ports:
+      - "9000:9000"
+    dns:
+      - 1.1.1.1
+      - 223.5.5.5
+    environment:
+      LARK_APP_ID: ${LARK_APP_ID}
+      LARK_APP_SECRET: ${LARK_APP_SECRET}
+      DECISION_API: http://decision-registry:8002
+      DASHBOARD_API: http://dashboard:8003
+      CONTRIBUTION_API: http://contribution-graph:8004
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      HTTP_PROXY: ${HTTP_PROXY:-}
+    depends_on:
+      - decision-registry
+
+volumes:
+  pgdata:

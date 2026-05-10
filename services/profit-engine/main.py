@@ -2,9 +2,10 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, date
+from decimal import Decimal
 import uuid
 
-from models.schemas import ProjectCreate, RevenueCreate, CostCreate, ApiResponse
+from models.schemas import ProjectCreate, RevenueCreate, CostCreate, ProjectMemberCreate, ApiResponse
 from models.models import Project, ProjectMember, Revenue, Cost, Distribution, DistributionItem, Base
 from core.calculator import ProfitCalculator
 from core.database import engine, get_db
@@ -69,7 +70,7 @@ async def add_revenue(input: RevenueCreate, db: Session = Depends(get_db)):
                 amount=input.amount,
                 received_at=datetime.strptime(input.received_at, "%Y-%m-%d").date(),
                 milestone=input.milestone)
-    p.total_revenue = (p.total_revenue or 0) + input.amount
+    p.total_revenue = (p.total_revenue or 0) + Decimal(str(input.amount))
     db.add(r)
     db.commit()
     return ApiResponse(data={"id": str(r.id), "amount": float(r.amount)})
@@ -84,7 +85,7 @@ async def add_cost(input: CostCreate, db: Session = Depends(get_db)):
              category=input.category, amount=input.amount,
              description=input.description,
              incurred_at=datetime.strptime(input.incurred_at, "%Y-%m-%d").date())
-    p.total_cost = (p.total_cost or 0) + input.amount
+    p.total_cost = (p.total_cost or 0) + Decimal(str(input.amount))
     db.add(c)
     db.commit()
     return ApiResponse(data={"id": str(c.id), "amount": float(c.amount)})
@@ -146,6 +147,43 @@ async def get_distributions(project_id: str, db: Session = Depends(get_db)):
                        "amount": float(i.amount or 0), "status": i.status} for i in items]
         })
     return ApiResponse(data=result)
+
+
+@app.get("/api/v1/projects/{project_id}/members")
+async def get_project_members(project_id: str, db: Session = Depends(get_db)):
+    items = db.query(ProjectMember).filter(ProjectMember.project_id == project_id).all()
+    return ApiResponse(data=[{
+        "id": str(m.id), "member_id": m.member_id,
+        "member_name": m.member_name, "role": m.role,
+        "role_coefficient": float(m.role_coefficient),
+    } for m in items])
+
+
+@app.post("/api/v1/projects/{project_id}/members")
+async def add_project_member(project_id: str, input: ProjectMemberCreate, db: Session = Depends(get_db)):
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    existing = db.query(ProjectMember).filter(
+        ProjectMember.project_id == project_id,
+        ProjectMember.member_id == input.member_id,
+    ).first()
+    if existing:
+        existing.member_name = input.member_name
+        existing.role = input.role
+        existing.role_coefficient = input.role_coefficient
+    else:
+        m = ProjectMember(
+            id=str(uuid.uuid4()),
+            project_id=project_id,
+            member_id=input.member_id,
+            member_name=input.member_name,
+            role=input.role,
+            role_coefficient=input.role_coefficient,
+        )
+        db.add(m)
+    db.commit()
+    return ApiResponse(data={"member_id": input.member_id, "member_name": input.member_name})
 
 
 @app.get("/api/v1/members/{member_id}/earnings")

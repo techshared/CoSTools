@@ -66,11 +66,7 @@ export const DECISION_TYPE_LABELS: Record<string, string> = {
 }
 
 export const DECISION_STATUS_LABELS: Record<string, string> = {
-  draft: '草稿',
-  proposal: '提案中',
-  voting: '投票中',
-  decided: '已决策',
-  implementing: '执行中',
+  open: '进行中',
   closed: '已关闭',
 }
 

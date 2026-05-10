@@ -153,8 +153,7 @@ export default function DecisionsPage() {
                       <div style={{ fontWeight: 600, marginTop: 2 }}>{d.title}</div>
                     </div>
                     <span className={`badge ${
-                      d.status === 'decided' ? 'badge-green' : d.status === 'proposal' ? 'badge-blue' :
-                      d.status === 'closed' ? 'badge-gray' : 'badge-yellow'
+                      d.status === 'closed' ? 'badge-gray' : 'badge-green'
                     }`}>
                       {DECISION_STATUS_LABELS[d.status] || d.status}
                     </span>
@@ -179,12 +178,13 @@ export default function DecisionsPage() {
                   <span style={{ fontSize: '0.75rem', color: '#8b5cf6', fontFamily: 'monospace' }}>{(selectedDecision as any).serial_no}</span>
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginTop: 4 }}>{selectedDecision.title}</h3>
                 </div>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  {selectedDecision.status === 'draft' && <button className="btn btn-primary" onClick={() => updateStatus(selectedDecision.id, 'proposal')}>发起提案</button>}
-                  {selectedDecision.status === 'proposal' && <button className="btn btn-primary" onClick={() => updateStatus(selectedDecision.id, 'voting')}>开始投票</button>}
-                  {selectedDecision.status === 'voting' && <button className="btn btn-primary" onClick={() => updateStatus(selectedDecision.id, 'decided')}>确认决策</button>}
-                  {selectedDecision.status === 'decided' && <button className="btn btn-secondary" onClick={() => updateStatus(selectedDecision.id, 'implementing')}>开始执行</button>}
-                  {selectedDecision.status === 'implementing' && <button className="btn btn-secondary" onClick={() => updateStatus(selectedDecision.id, 'closed')}>完成关闭</button>}
+                <div>
+                  {selectedDecision.status === 'open' && (
+                    <button className="btn btn-secondary" onClick={() => updateStatus(selectedDecision.id, 'closed')}>关闭决策</button>
+                  )}
+                  {selectedDecision.status === 'closed' && (
+                    <button className="btn btn-primary" onClick={() => updateStatus(selectedDecision.id, 'open')}>重新开启</button>
+                  )}
                 </div>
               </div>
 

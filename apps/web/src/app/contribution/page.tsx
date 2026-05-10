@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { forceSimulation, forceLink, forceManyBody, forceCenter, forceCollide } from 'd3-force'
 
 const API = '/api/be/contribution'
 
@@ -101,34 +102,7 @@ export default function ContributionPage() {
       {view === 'graph' && graphData && (
         <div className="card">
           <h3 style={{ fontWeight: 600, marginBottom: 16 }}>协作网络</h3>
-          <svg width="100%" height={400} style={{ background: '#fafafa', borderRadius: 8 }}>
-            {graphData.edges?.map((e: any, i: number) => {
-              const src = graphData.nodes.find((n: any) => n.id === e.sourceNodeId)
-              const tgt = graphData.nodes.find((n: any) => n.id === e.targetNodeId)
-              if (!src || !tgt) return null
-              const nodes = graphData.nodes
-              const si = nodes.indexOf(src)
-              const ti = nodes.indexOf(tgt)
-              const cx = 200 + Math.cos((si / nodes.length) * Math.PI * 2) * 150
-              const cy = 200 + Math.sin((si / nodes.length) * Math.PI * 2) * 150
-              const tx = 200 + Math.cos((ti / nodes.length) * Math.PI * 2) * 150
-              const ty = 200 + Math.sin((ti / nodes.length) * Math.PI * 2) * 150
-              return <line key={i} x1={cx} y1={cy} x2={tx} y2={ty} stroke="#e2e8f0" strokeWidth={1} />
-            })}
-            {graphData.nodes?.map((n: any, i: number) => {
-              const nodes = graphData.nodes
-              const x = 200 + Math.cos((i / nodes.length) * Math.PI * 2) * 150
-              const y = 200 + Math.sin((i / nodes.length) * Math.PI * 2) * 150
-              return (
-                <g key={n.id}>
-                  <circle cx={x} cy={y} r={24} fill="#f59e0b" opacity={0.9} />
-                  <text x={x} y={y + 4} textAnchor="middle" fill="white" fontSize={11} fontWeight={600}>
-                    {n.contributorId?.slice(-2)}
-                  </text>
-                </g>
-              )
-            })}
-          </svg>
+          <ForceGraph nodes={graphData.nodes} edges={graphData.edges} />
           <div style={{ marginTop: 16, fontSize: '0.875rem', color: '#64748b', textAlign: 'center' }}>
             节点 = 成员 · 连线 = 协作关系（代码审查、文档评论、协作编辑）
           </div>
@@ -160,6 +134,94 @@ const DIMENSION_LABELS: Record<string, { label: string; color: string }> = {
   design: { label: '设计贡献', color: '#f59e0b' },
   community: { label: '社区/知识', color: '#ec4899' },
 }
+
+function ForceGraph({ nodes, edges }: { nodes: any[]; edges: any[] }) {
+  const svgRef = useRef<SVGSVGElement>(null)
+  const [simNodes, setSimNodes] = useState<any[]>([])
+  const [simEdges, setSimEdges] = useState<any[]>([])
+
+  useEffect(() => {
+    if (!nodes || nodes.length === 0 || !edges) return
+
+    const nData = nodes.map((n, i) => ({ ...n, x: undefined, y: undefined, fx: null, fy: null }))
+    const eData = edges.map(e => ({
+      source: nodes.findIndex((n: any) => n.id === e.sourceNodeId),
+      target: nodes.findIndex((n: any) => n.id === e.targetNodeId),
+      ...e,
+    })).filter(e => e.source >= 0 && e.target >= 0)
+
+    const sim = forceSimulation(nData)
+      .force('link', forceLink(eData).id((d: any) => d.index).distance(80))
+      .force('charge', forceManyBody().strength(-200))
+      .force('center', forceCenter(300, 200))
+      .force('collide', forceCollide(30))
+      .alphaDecay(0.03)
+
+    sim.on('tick', () => {
+      setSimNodes([...nData])
+      setSimEdges([...eData])
+    })
+
+    return () => { sim.stop() }
+  }, [nodes, edges])
+
+  if (simNodes.length === 0) {
+    return <div style={{ height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.875rem' }}>加载中...</div>
+  }
+
+  return (
+    <svg ref={svgRef} width="100%" height={400} style={{ background: '#fafafa', borderRadius: 8, overflow: 'hidden' }}>
+      <defs>
+        {simNodes.map((n: any) => {
+          const r = 20 + Math.min(n.weight || 50, 110) / 110 * 20
+          return (
+            <radialGradient key={n.id} id={`grad-${n.id.replace(/[^a-zA-Z0-9]/g, '')}`}>
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+              <stop offset="100%" stopColor="#d97706" stopOpacity={0.9} />
+            </radialGradient>
+          )
+        })}
+      </defs>
+      {simEdges.map((e: any, i: number) => {
+        const s = simNodes[e.source]
+        const t = simNodes[e.target]
+        if (!s || !t) return null
+        return (
+          <line key={`e-${i}`}
+            x1={s.x} y1={s.y} x2={t.x} y2={t.y}
+            stroke="#e2e8f0" strokeWidth={Math.min(e.weight || 1, 4)}
+            strokeOpacity={0.6}
+          />
+        )
+      })}
+      {simNodes.map((n: any) => {
+        const r = 20 + Math.min(n.weight || 50, 110) / 110 * 20
+        const gradId = `url(#grad-${n.id.replace(/[^a-zA-Z0-9]/g, '')})`
+        return (
+          <g key={n.id}>
+            <circle cx={n.x} cy={n.y} r={r}
+              fill={gradId}
+              stroke="white" strokeWidth={2}
+              style={{ cursor: 'pointer', transition: 'r 0.2s' }}
+            />
+            <text x={n.x} y={n.y + 1} textAnchor="middle" fill="white"
+              fontSize={Math.max(9, r * 0.45)} fontWeight={600}
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
+            >
+              {(n.title || n.contributorId)?.slice(0, 4)}
+            </text>
+            <text x={n.x} y={n.y + r + 12} textAnchor="middle" fill="#64748b"
+              fontSize={10} style={{ pointerEvents: 'none', userSelect: 'none' }}
+            >
+              {n.weight?.toFixed(0) || ''}
+            </text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
 
 function DimensionBar({ dim }: { dim: any }) {
   if (!dim) return null

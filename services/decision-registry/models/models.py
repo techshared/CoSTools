@@ -11,7 +11,7 @@ class Decision(Base):
     serial_no = Column(String(20), unique=True, nullable=False)
     title = Column(String(500), nullable=False)
     type = Column(String(50), default='other')
-    status = Column(String(20), default='draft')
+    status = Column(String(20), default='open')
     background = Column(Text, nullable=True)
     options = Column(JSON, default=list)
     decision = Column(Text, nullable=True)

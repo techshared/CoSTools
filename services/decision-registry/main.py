@@ -88,7 +88,7 @@ async def create_decision(input: CreateDecisionInput, db: Session = Depends(get_
         serial_no=serial,
         title=input.title,
         type=input.type,
-        status='draft',
+        status='open',
         background=input.background,
         options=[o.model_dump() for o in (input.options or [])] if input.options else [],
         decision=None,
@@ -160,7 +160,7 @@ async def update_status(decision_id: str, status: str, db: Session = Depends(get
     d = db.query(Decision).filter(Decision.id == decision_id).first()
     if not d:
         raise HTTPException(status_code=404)
-    valid = ['draft', 'proposal', 'voting', 'decided', 'implementing', 'closed']
+    valid = ['open', 'closed']
     if status not in valid:
         raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
     d.status = status
@@ -221,7 +221,7 @@ async def bot_create_decision(input: BotDecisionInput, db: Session = Depends(get
         serial_no=serial,
         title=title,
         type='other',
-        status='draft',
+        status='open',
         background=None,
         options=[],
         decision=None,

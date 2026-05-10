@@ -107,6 +107,9 @@ async def get_graph(project_id: Optional[str] = Query(None), db: Session = Depen
     if period:
         q = q.filter(CollaborationEdge.period == period)
     edges = q.all()
+    if not edges and period:
+        q = db.query(CollaborationEdge)
+        edges = q.all()
 
     return ApiResponse(data={
         "nodes": nodes,

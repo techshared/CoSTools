@@ -12,6 +12,8 @@ export default function ProfitPage() {
   const [distributions, setDistributions] = useState<any[]>([])
   const [showCreate, setShowCreate] = useState(false)
   const [form, setForm] = useState({ name: '', description: '', reservedRatio: 0.2, profitShareRatio: 0.3 })
+  const [confirm, setConfirm] = useState<{ pid: string; preview: any } | null>(null)
+  const [distributing, setDistributing] = useState(false)
 
   const loadProjects = async () => {
     try {
@@ -48,12 +50,47 @@ export default function ProfitPage() {
     } catch { console.warn('createProject failed') }
   }
 
-  const triggerDistribute = async (projectId: string) => {
+  const preCheckAndConfirm = async (projectId: string) => {
+    const p = projects.find(x => x.id === projectId)
+    if (!p) return
+
+    if ((p as any).total_revenue <= 0 && (p as any).total_cost <= 0) {
+      setConfirm({ pid: projectId, preview: { error: '项目暂无收入和成本数据，请先录入后再触发分成' } })
+      return
+    }
+
     try {
-      const res = await fetch(`${API}/projects/${projectId}/distribute`, { method: 'POST' })
+      const mres = await fetch(`${API}/projects/${projectId}/members`)
+      const mjson = await mres.json()
+      const members = mjson.success ? (mjson.data || []) : []
+      if (members.length === 0) {
+        setConfirm({ pid: projectId, preview: { error: '项目暂无成员，请先添加成员后再触发分成' } })
+        return
+      }
+    } catch {
+      setConfirm({ pid: projectId, preview: { error: '无法获取项目成员信息' } })
+      return
+    }
+
+    setConfirm({ pid: projectId, preview: null })
+  }
+
+  const executeDistribute = async () => {
+    if (!confirm) return
+    setDistributing(true)
+    try {
+      const res = await fetch(`${API}/projects/${confirm.pid}/distribute`, { method: 'POST' })
       const json = await res.json()
-      if (json.success) loadDistributions(projectId)
-    } catch { console.warn('triggerDistribute failed') }
+      if (json.success) {
+        setConfirm(null)
+        loadDistributions(confirm.pid)
+      } else {
+        setConfirm({ pid: confirm.pid, preview: { error: json.error || '分成计算失败' } })
+      }
+    } catch {
+      setConfirm({ pid: confirm.pid, preview: { error: '网络请求失败，请重试' } })
+    }
+    setDistributing(false)
   }
 
   return (
@@ -133,7 +170,7 @@ export default function ProfitPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h3 style={{ fontWeight: 600 }}>分成记录</h3>
             {selectedProject && (
-              <button className="btn btn-primary" onClick={() => triggerDistribute(selectedProject)}>触发分成</button>
+              <button className="btn btn-primary" onClick={() => preCheckAndConfirm(selectedProject)}>触发分成</button>
             )}
           </div>
           {!selectedProject ? (
@@ -155,7 +192,7 @@ export default function ProfitPage() {
                   </div>
                   {d.items?.map((item: any, i: number) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderTop: '1px solid #f1f5f9', fontSize: '0.875rem' }}>
-                      <span>{item.memberName || item.memberId}</span>
+                      <span>{item.member_name || item.member_id}</span>
                       <span style={{ fontWeight: 500 }}>{formatCurrency(item.amount)}</span>
                     </div>
                   ))}
@@ -165,6 +202,33 @@ export default function ProfitPage() {
           )}
         </div>
       </div>
+
+      {confirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+          <div className="card" style={{ width: 400, maxWidth: '90vw' }}>
+            {confirm.preview?.error ? (
+              <>
+                <h3 style={{ fontWeight: 600, marginBottom: 8 }}>无法触发分成</h3>
+                <p style={{ color: '#ef4444', fontSize: '0.875rem', marginBottom: 16 }}>{confirm.preview.error}</p>
+                <button className="btn btn-secondary" onClick={() => setConfirm(null)}>知道了</button>
+              </>
+            ) : (
+              <>
+                <h3 style={{ fontWeight: 600, marginBottom: 8 }}>确认分成</h3>
+                <p style={{ color: '#64748b', fontSize: '0.875rem', marginBottom: 16 }}>
+                  将基于当前收入和成本数据，计算项目利润并按成员权重分配。
+                </p>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button className="btn btn-secondary" onClick={() => setConfirm(null)}>取消</button>
+                  <button className="btn btn-primary" onClick={executeDistribute} disabled={distributing}>
+                    {distributing ? '计算中...' : '确认触发'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

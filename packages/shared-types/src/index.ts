@@ -98,7 +98,7 @@ export interface AddCostInput {
 
 // ===================== 异步决策记录器 =====================
 
-export type DecisionStatus = 'draft' | 'proposal' | 'voting' | 'decided' | 'implementing' | 'closed'
+export type DecisionStatus = 'open' | 'closed'
 export type DecisionType = 'tech_selection' | 'product' | 'hiring' | 'process' | 'strategy' | 'other'
 export type VoteValue = 'approve' | 'abstain' | 'against'
 

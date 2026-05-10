@@ -59,6 +59,13 @@ class DistributionItemResponse(BaseModel):
     status: str
 
 
+class ProjectMemberCreate(BaseModel):
+    member_id: str
+    member_name: str
+    role: str
+    role_coefficient: float = 1.0
+
+
 class ApiResponse(BaseModel):
     success: bool = True
     data: Optional[object] = None

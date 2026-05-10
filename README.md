@@ -157,5 +157,4 @@ MIT License · 随意使用、修改、商用
 ## 反馈
 
 - 问题/建议：提交 [GitHub Issue](https://github.com/techshared/CoSTools/issues)
-- 项目文档：[README-TECH.md](./README-TECH.md)（技术实现）
 - 部署指南：[docs/deployment.md](./docs/deployment.md)

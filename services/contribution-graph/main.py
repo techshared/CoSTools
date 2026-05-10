@@ -95,8 +95,13 @@ async def get_graph(project_id: Optional[str] = Query(None), db: Session = Depen
         ContributionScore.period.desc()).first()
     period = latest_period[0] if latest_period else None
 
-    scores = db.query(ContributionScore).all()
-    nodes = [node_to_dict(s) for s in scores]
+    seen = set()
+    nodes = []
+    all_scores = db.query(ContributionScore).order_by(ContributionScore.period.desc()).all()
+    for s in all_scores:
+        if s.member_id not in seen:
+            seen.add(s.member_id)
+            nodes.append(node_to_dict(s))
 
     q = db.query(CollaborationEdge)
     if period:
@@ -112,7 +117,7 @@ async def get_graph(project_id: Optional[str] = Query(None), db: Session = Depen
             "edgeType": e.edge_type,
             "weight": e.weight,
         } for e in edges],
-        "scores": [scores_to_dict(s) for s in scores],
+        "scores": [scores_to_dict(s) for s in all_scores if s.period == period] if period else [],
     })
 
 

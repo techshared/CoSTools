@@ -69,11 +69,7 @@ export default function DecisionsPage() {
 
   const updateStatus = async (id: string, status: string) => {
     try {
-      const res = await fetch(`${API}/decisions/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      })
+      const res = await fetch(`${API}/decisions/${id}/status?status=${status}`, { method: 'PATCH' })
       const json = await res.json()
       if (json.success) viewDecision(id)
     } catch { console.warn('updateStatus failed') }

@@ -145,7 +145,7 @@ export default function ProfitPage() {
               {distributions.map((d: any) => (
                 <div key={d.id} className="card" style={{ padding: '1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <span style={{ fontSize: '0.875rem', color: '#64748b' }}>计算于 {formatDate(d.calculatedAt)}</span>
+                    <span style={{ fontSize: '0.875rem', color: '#64748b' }}>计算于 {formatDate((d as any).calculated_at)}</span>
                     <span className={`badge ${d.status === 'approved' ? 'badge-green' : d.status === 'paid' ? 'badge-blue' : 'badge-yellow'}`}>
                       {d.status === 'pending' ? '待审批' : d.status === 'approved' ? '已批准' : d.status === 'paid' ? '已发放' : '争议中'}
                     </span>

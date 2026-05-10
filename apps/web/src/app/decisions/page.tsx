@@ -153,7 +153,7 @@ export default function DecisionsPage() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
                     <div>
-                      <span style={{ fontSize: '0.75rem', color: '#8b5cf6', fontFamily: 'monospace' }}>{d.serialNo}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#8b5cf6', fontFamily: 'monospace' }}>{(d as any).serial_no}</span>
                       <div style={{ fontWeight: 600, marginTop: 2 }}>{d.title}</div>
                     </div>
                     <span className={`badge ${
@@ -166,8 +166,8 @@ export default function DecisionsPage() {
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: '0.75rem', color: '#64748b' }}>
                     <span>{DECISION_TYPE_LABELS[d.type] || d.type}</span>
                     <span>·</span>
-                    <span>{timeAgo(d.createdAt)}</span>
-                    {d.commentCount > 0 && <><span>·</span><span>{d.commentCount} 条讨论</span></>}
+                    <span>{timeAgo((d as any).created_at)}</span>
+                    {(d as any).comment_count > 0 && <><span>·</span><span>{(d as any).comment_count} 条讨论</span></>}
                   </div>
                 </div>
               ))}
@@ -180,7 +180,7 @@ export default function DecisionsPage() {
             <div className="card" style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                 <div>
-                  <span style={{ fontSize: '0.75rem', color: '#8b5cf6', fontFamily: 'monospace' }}>{selectedDecision.serialNo}</span>
+                  <span style={{ fontSize: '0.75rem', color: '#8b5cf6', fontFamily: 'monospace' }}>{(selectedDecision as any).serial_no}</span>
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginTop: 4 }}>{selectedDecision.title}</h3>
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
@@ -233,8 +233,8 @@ export default function DecisionsPage() {
                   {comments.map((c: any) => (
                     <div key={c.id} style={{ padding: '0.75rem', background: '#f8fafc', borderRadius: 8 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: '0.75rem', color: '#64748b' }}>
-                        <span style={{ fontWeight: 500 }}>{c.authorName}</span>
-                        <span>{timeAgo(c.createdAt)}</span>
+                        <span style={{ fontWeight: 500 }}>{(c as any).author_name}</span>
+                        <span>{timeAgo((c as any).created_at)}</span>
                       </div>
                       <div style={{ fontSize: '0.875rem' }}>{c.content}</div>
                     </div>
